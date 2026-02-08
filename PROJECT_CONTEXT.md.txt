@@ -1,0 +1,147 @@
+# PROJECT CONTEXT — Quadruped Robot Offline Data Processing
+
+## 1. Project Overview
+
+This project focuses on **offline data processing and algorithm development** for a quadruped robot (mechanical dog) based on **real ROS data collected from the physical robot**.
+
+The robot runs **Ubuntu + ROS Noetic**, and provides multiple ROS topics related to:
+- body odometry
+- IMU
+- joint states
+- motion commands
+
+Due to unstable WiFi and hardware constraints, the project workflow is intentionally designed as:
+
+> **Real robot → ROS bag recording → Windows offline analysis**
+
+The goal is to decouple algorithm development from real-time robot operation.
+
+---
+
+## 2. Robot & System Setup (Background Knowledge)
+
+- Robot OS: Ubuntu (onboard computer)
+- ROS version: ROS Noetic (ROS1)
+- Data source: Real robot (not simulation)
+- Data transfer: `rosbag record` + `scp`
+- Offline environment:
+  - Windows host
+  - WSL2 (Ubuntu 20.04)
+  - ROS Noetic installed in WSL
+
+Offline ROS workflow:
+- Local `roscore`
+- `rosbag play --clock`
+- Subscribe to topics for analysis or export
+
+---
+
+## 3. Available ROS Topics (Confirmed)
+
+The following topics are **verified, stable, and recorded in rosbag**:
+
+| Topic | Message Type | Description |
+|------|-------------|-------------|
+| `/leg_odom` | `geometry_msgs/PoseWithCovarianceStamped` | Body pose (x, y, z + orientation) |
+| `/leg_odom2` | `nav_msgs/Odometry` | Alternative odometry |
+| `/imu/data` | `sensor_msgs/Imu` | IMU acceleration & angular velocity |
+| `/joint_states` | `sensor_msgs/JointState` | Joint positions & velocities |
+| `/cmd_vel` | `geometry_msgs/Twist` | Velocity command |
+| `/cmd_vel_corrected` | `geometry_msgs/Twist` | Corrected velocity command |
+
+A sample rosbag (`srtp_core_30s.bag`, ~35s) has already been recorded and verified.
+
+---
+
+## 4. What Has Been Done So Far
+
+### ✅ Completed
+- Successfully recorded real robot data using `rosbag record`
+- Verified bag integrity with `rosbag info`
+- Transferred bag files to Windows
+- Set up ROS Noetic in WSL
+- Successfully replayed bag offline using:
+  ```bash
+  roscore
+  rosbag play --clock srtp_core_30s.bag
+````
+
+* Verified topic playback:
+
+  * `/leg_odom` echo works
+  * `/imu/data` ~100 Hz
+  * `/joint_states` valid
+
+### ✅ Confirmed Design Decision
+
+* Real-time visualization (RViz) on the robot is **not required**
+* Algorithm development will be done **offline on Windows**
+* Robot is treated as a **data source**, not a live dependency
+
+---
+
+## 5. Current Main Objective (Important)
+
+The current phase of the project is:
+
+> **Offline data processing and algorithm prototyping on Windows**
+
+The focus is **NOT** on ROS networking, hardware debugging, or real-time control.
+
+---
+
+## 6. Immediate Next Tasks (For Codex)
+
+Codex should prioritize helping with the following tasks:
+
+### 6.1 Data Extraction
+
+* Export ROS topic data to CSV / NumPy-friendly formats
+* Typical commands:
+
+  ```bash
+  rostopic echo -p /leg_odom > leg_odom.csv
+  rostopic echo -p /imu/data > imu.csv
+  rostopic echo -p /joint_states > joint_states.csv
+  ```
+
+### 6.2 Offline Data Processing (Python Preferred)
+
+* Load CSV files
+* Parse timestamps and fields
+* Plot and analyze:
+
+  * 2D/3D trajectory from `/leg_odom`
+  * Yaw extraction from quaternion
+  * IMU acceleration and angular velocity
+  * Joint trajectories
+
+### 6.3 Algorithm Prototyping
+
+Potential algorithm directions include (but are not limited to):
+
+* Odometry trajectory visualization
+* Velocity estimation
+* IMU-based state recognition
+* SRTP-related processing
+* Gait phase analysis using joint states
+
+---
+
+## 7. Constraints & Notes
+
+* Do NOT assume real-time robot access
+* Do NOT rely on RViz or GUI tools
+* Prefer Python scripts that can run purely offline
+* ROS is only used as a **data format / playback tool**
+* Final outputs should be:
+
+  * CSV
+  * figures
+  * algorithm-ready data structures
+
+---
+
+## 8. One-Sentence Summary (For AI Context)
+
+> This project uses real quadruped robot ROS data recorded in rosbag format, and focuses on offline data processing, visualization, and algorithm development on Windows using ROS Noetic in WSL.
